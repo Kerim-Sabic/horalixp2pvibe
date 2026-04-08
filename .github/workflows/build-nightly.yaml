@@ -1,0 +1,21 @@
+name: Build Horalix P2P (Nightly)
+
+on:
+  schedule:
+    # Run nightly build at 05:00 UTC
+    - cron: '00 05 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
+  artifact-metadata: write
+  attestations: write
+  id-token: write
+
+jobs:
+  build-horalix:
+    uses: ./.github/workflows/build-horalix.yaml
+    # if we only want nightlies to run for specific users:
+    # if: contains(fromJSON('["Kerim-Sabic"]'), github.repository_owner)
+    secrets: inherit

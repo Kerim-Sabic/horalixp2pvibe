@@ -1,0 +1,16 @@
+FROM alpine
+ARG TARGETARCH
+
+LABEL org.opencontainers.image.authors="Horalix P2P Project" \
+      org.opencontainers.image.url="https://horalix.com" \
+      org.opencontainers.image.documentation="https://horalix.com/docs" \
+      org.opencontainers.image.source="https://github.com/Kerim-Sabic/horalixp2pvibe" \
+      org.opencontainers.image.vendor="Horalix P2P Project" \
+      org.opencontainers.image.licenses="MPL-2.0" \
+      org.opencontainers.image.title="Horalix P2P Relay Pool Server"
+
+EXPOSE 8080
+
+COPY strelaypoolsrv-linux-${TARGETARCH} /bin/strelaypoolsrv
+
+ENTRYPOINT ["/bin/strelaypoolsrv", "-listen", ":8080"]

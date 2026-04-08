@@ -1,0 +1,127 @@
+name: Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.os }}/${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows
+            arch: amd64
+            ext: .exe
+            archive: zip
+          - os: windows
+            arch: arm64
+            ext: .exe
+            archive: zip
+          - os: linux
+            arch: amd64
+            ext: ""
+            archive: tar.gz
+          - os: linux
+            arch: arm64
+            ext: ""
+            archive: tar.gz
+          - os: darwin
+            arch: amd64
+            ext: ""
+            archive: tar.gz
+          - os: darwin
+            arch: arm64
+            ext: ""
+            archive: tar.gz
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '~1.24'
+
+      - name: Set version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+          else
+            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          fi
+
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          BINARY="horalix${{ matrix.ext }}"
+          go build -v \
+            -ldflags "-X github.com/syncthing/syncthing/lib/build.Version=${VERSION} -X github.com/syncthing/syncthing/lib/build.User=builder -X github.com/syncthing/syncthing/lib/build.Host=github.horalix.com -X github.com/syncthing/syncthing/lib/build.Stamp=$(date +%s)" \
+            -tags "sqlite_omit_load_extension sqlite_dbstat" \
+            -o "$BINARY" \
+            ./cmd/syncthing
+          echo "Built $BINARY"
+
+      - name: Package (zip for Windows)
+        if: matrix.archive == 'zip'
+        run: |
+          PKGNAME="horalix-${{ matrix.os }}-${{ matrix.arch }}-${VERSION}"
+          mkdir "$PKGNAME"
+          cp "horalix${{ matrix.ext }}" "$PKGNAME/"
+          cp README.md LICENSE "$PKGNAME/"
+          zip -r "${PKGNAME}.zip" "$PKGNAME"
+          echo "ASSET=${PKGNAME}.zip" >> $GITHUB_ENV
+
+      - name: Package (tar.gz for Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          PKGNAME="horalix-${{ matrix.os }}-${{ matrix.arch }}-${VERSION}"
+          mkdir "$PKGNAME"
+          cp "horalix${{ matrix.ext }}" "$PKGNAME/"
+          cp README.md LICENSE "$PKGNAME/"
+          tar czf "${PKGNAME}.tar.gz" "$PKGNAME"
+          echo "ASSET=${PKGNAME}.tar.gz" >> $GITHUB_ENV
+
+      - name: Upload to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.VERSION }}
+          name: "Horalix P2P ${{ env.VERSION }}"
+          body: |
+            ## Horalix P2P ${{ env.VERSION }}
+
+            Direct, encrypted, peer-to-peer file sync. No cloud. No account. No middleman.
+
+            ### Downloads
+
+            | Platform | File |
+            |----------|------|
+            | Windows 64-bit | `horalix-windows-amd64-*.zip` |
+            | Windows ARM64 | `horalix-windows-arm64-*.zip` |
+            | Linux 64-bit | `horalix-linux-amd64-*.tar.gz` |
+            | Linux ARM64 | `horalix-linux-arm64-*.tar.gz` |
+            | macOS Intel | `horalix-darwin-amd64-*.tar.gz` |
+            | macOS Apple Silicon | `horalix-darwin-arm64-*.tar.gz` |
+
+            ### Quick Start
+            1. Download and extract the archive for your platform
+            2. Run `horalix.exe` (Windows) or `./horalix` (Linux/macOS)
+            3. Open **http://127.0.0.1:8384** in your browser
+          files: ${{ env.ASSET }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,52 @@
+  version: 1
+  creds:
+    - registry: docker.io
+      user: "{{env \"DOCKERHUB_USERNAME\"}}"
+      pass: "{{env \"DOCKERHUB_TOKEN\"}}"
+
+  defaults:
+    ratelimit:
+      min: 100
+      retry: 1m
+    parallel: 4
+
+  sync:
+
+    - source: ghcr.io/kerim-sabic/horalixp2pvibe
+      target: docker.io/kerim-sabic/horalixp2pvibe
+      type: repository
+      tags:
+        allow:
+          - latest
+          - rc
+          - edge
+          - \d+
+          - \d+\.\d+
+          - \d+\.\d+\.\d+
+          - \d+\.\d+\.\d+-rc\.\d+
+
+    - source: ghcr.io/kerim-sabic/horalix-relaysrv
+      target: docker.io/kerim-sabic/horalix-relaysrv
+      type: repository
+      tags:
+        allow:
+          - latest
+          - rc
+          - edge
+          - \d+
+          - \d+\.\d+
+          - \d+\.\d+\.\d+
+          - \d+\.\d+\.\d+-rc\.\d+
+
+    - source: ghcr.io/kerim-sabic/horalix-discosrv
+      target: docker.io/kerim-sabic/horalix-discosrv
+      type: repository
+      tags:
+        allow:
+          - latest
+          - rc
+          - edge
+          - \d+
+          - \d+\.\d+
+          - \d+\.\d+\.\d+
+          - \d+\.\d+\.\d+-rc\.\d+

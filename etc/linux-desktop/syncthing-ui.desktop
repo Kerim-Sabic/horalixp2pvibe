@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Horalix P2P Web UI
+GenericName=File synchronization UI
+Comment=Opens Horalix P2P's Web UI in the default browser (Horalix P2P must already be started).
+Exec=syncthing browser
+Icon=syncthing
+Terminal=false
+Type=Application
+Keywords=synchronization;interface;
+Categories=Network;FileTransfer;P2P
