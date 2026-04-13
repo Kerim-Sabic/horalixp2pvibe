@@ -1,6 +1,5 @@
 <div align="center">
 
-<img src=".github/social-preview.svg" alt="Horalix P2P" width="100%"/>
 
 <br/><br/>
 
